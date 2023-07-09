@@ -127,40 +127,6 @@ LinearSystem::LinearSystem(Logger* pLog)
         exit(1);    //force to have some kind of input/output method
 }
 
-//void LinearSystem::Initialize()
-//{
-//    pLogger->Write("Please enter your linear equations one by one, without parentheses and using letters for variables. Equations must be of the form ax + by + ... = K. Press enter when finished\n");
-//
-//    string eq;
-//
-//    pLogger->Input(eq);
-//    while(eq.size() != 0 && numEq < MAX_EQS)
-//    {
-//        if(EquationToMatrix(eq))
-//        {
-//            numEq++;
-//            numVars = (int) vars.size();
-//            pLogger->Write("enter additional equations or press enter to quit: \n");
-//        }
-//        else
-//        {
-//            CleanUp();  //undo any changes made in EquationToMatrix
-//            pLogger->Write( "Not Linear, enter a valid linear equation or press enter to stop.\n" );
-//        }
-//        pLogger->Input(eq);
-//    }
-//
-//    for(int i = 0; i < numEq; i++)
-//        augMatrix[i][numVars] = constants[i];
-//
-//    if(numEq != 0)
-//    {
-//        pLogger->Write("Augmented Matrix: \n");
-//        pLogger->Write(GetMatrix());
-//        Solve();
-//    }
-//}
-
 void LinearSystem::AddEquation(string eq)
 {
     if(eq.size() != 0) // only allow adding equations if matrix has not been solved yet, do nothing for empty string
