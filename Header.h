@@ -60,6 +60,8 @@ public:
     // virtual void Input(string& s) = 0; let them handle input in main or do through logger?
 };
 
+
+
 class LinearSystem
 {
     public:
@@ -68,7 +70,7 @@ class LinearSystem
         void AddEquation(string eq);
         void FinishAndSolve();  //solving same matrix twice? should be ok
         void SetShowWork(bool show_wrk);
-        void Showsolution() { if(solved) pLogger->Write(solution_ss.str()); }
+        void Showsolution() const { if(solved) pLogger->Write(solution_ss.str()); }
             
     private:
         int numEq = 0;      // number of rows
@@ -105,10 +107,12 @@ class LinearSystem
         void REFSquareOrTall();
         
         int Solutions(int row) const;
-        void DealWithInfinity(int row, stringstream& ss);
+        void DealWithInfinity(int row);
     
-        void DisplayWork();
+        void DisplayWork() const;
         void SetNoSolutions() { solution_ss.str(""); solution_ss.clear(); solution_ss << "No Solutions\n"; }
+    
+        void ResetConstants();
 };
 
 
@@ -179,8 +183,7 @@ void LinearSystem::AddEquation(string eq)
 
 void LinearSystem::FinishAndSolve()
 {
-    
-    for(int i = equationsSolved; i < numEq; i++)
+    for(int i = 0; i < numEq; i++)
         augMatrix[i][numVars] = constants[i];
     
     if(numEq != 0)
@@ -333,7 +336,7 @@ void LinearSystem::SetShowWork(bool show_wrk)
     DisplayWork();
 }
 
-void LinearSystem::DisplayWork()
+void LinearSystem::DisplayWork() const
 {
     if(showWork && solved)
         pLogger->Write(workRecord.str());
@@ -443,20 +446,20 @@ int LinearSystem::Solutions(int row) const    // return 0 for no solutions, 1 fo
     return 1;   //nothing wrong, 1 solution in that row
 }
 
-void LinearSystem::DealWithInfinity(int row, stringstream& ss)  // at this point matrix should be upper triangular, infinite solutions only allowed in rows that are supposed to have pivot variables
+void LinearSystem::DealWithInfinity(int row)  // at this point matrix should be upper triangular, infinite solutions only allowed in rows that are supposed to have pivot variables
 {
     if(abs(augMatrix[row][row]) > EPSILON)
     {
-        ss << vars[row] << " = " << augMatrix[row][numVars];
+        solution_ss << vars[row] << " = " << augMatrix[row][numVars];
         for(int col = row + 1; col < numVars; col++)
         {
             if(abs(augMatrix[row][col]) > EPSILON)
-                ss << " + " << -1 * augMatrix[row][col] << vars[col];
+                solution_ss << " + " << -1 * augMatrix[row][col] << vars[col];
         }
-        ss << endl;
+        solution_ss << endl;
     }
     else
-        ss << vars[row] << " is a free variable." << endl;
+        solution_ss << vars[row] << " is a free variable." << endl;
 }
 
 //////////////////////////////////////////////////
@@ -629,7 +632,7 @@ void LinearSystem::SolveNonWide()
                 solution_ss << vars[i] << " = " << augMatrix[i][numVars] << endl;
                 break;
             case 2:
-                DealWithInfinity(i, solution_ss);
+                DealWithInfinity(i);
         }
     }
     
@@ -640,6 +643,15 @@ void LinearSystem::SolveNonWide()
             SetNoSolutions();
             return;
         }
+    }
+}
+
+void LinearSystem::ResetConstants()
+{
+    for(int i = 0; i < numEq; i++)
+    {
+        constants[i] = augMatrix[i][numVars];
+        augMatrix[i][numVars] = 0;
     }
 }
 
@@ -656,11 +668,14 @@ void LinearSystem::Solve()
     DisplayWork();
     pLogger->Write(solution_ss.str());
     
+    // prepare for solving system again
     equationsSolved = numEq;
     workRecord.str("");
     workRecord.clear();
     solution_ss.str("");
     solution_ss.clear();
+    
+    ResetConstants();
 }
 
 #endif /* Header_h */
