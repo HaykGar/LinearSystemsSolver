@@ -70,7 +70,7 @@ class LinearSystem
         void AddEquation(string eq);
         void FinishAndSolve();  //solving same matrix twice? should be ok
         void SetShowWork(bool show_wrk);
-        void Showsolution() const { if(solved) pLogger->Write(solution_ss.str()); }
+        void Showsolution() const { if(solved) pLogger->Write(solution_ss.str()); }     //Write solution again if desired
             
     private:
         int numEq = 0;      // number of rows
@@ -90,6 +90,7 @@ class LinearSystem
         bool EquationToMatrix(string& s);
         bool ProcessEnd(string& s, size_t pos);
         void CleanUp();
+        void ResetConstants();
     
         void R_plus_xR(int r1, int r2, double multiplier);
         void R_divide(int row, double divisor);
@@ -111,8 +112,7 @@ class LinearSystem
     
         void DisplayWork() const;
         void SetNoSolutions() { solution_ss.str(""); solution_ss.clear(); solution_ss << "No Solutions\n"; }
-    
-        void ResetConstants();
+
 };
 
 
@@ -144,19 +144,6 @@ void LinearSystem::AddEquation(string eq)
             CleanUp();  //undo any changes made in EquationToMatrix
             pLogger->Write( "Please enter a valid linear equation" );
         }
-    }
-}
-
-void LinearSystem::FinishAndSolve()
-{
-    for(int i = 0; i < numEq; i++)
-        augMatrix[i][numVars] = constants[i];
-    
-    if(numEq != 0)
-    {
-        workRecord << "Augmented Matrix: \n";
-        workRecord << GetMatrix();
-        Solve();
     }
 }
 
@@ -278,6 +265,33 @@ void LinearSystem::CleanUp()  //procedure for returning false from EquationToMat
         vars.pop_back();
 }
 
+void LinearSystem::FinishAndSolve()
+{
+    for(int i = 0; i < numEq; i++)
+        augMatrix[i][numVars] = constants[i];
+    
+    if(numEq != 0)
+    {
+        workRecord << "Augmented Matrix: \n";
+        workRecord << GetMatrix();
+        Solve();
+    }
+}
+
+
+void LinearSystem::ResetConstants()
+{
+    for(int i = 0; i < numEq; i++)
+    {
+        constants[i] = augMatrix[i][numVars];
+        augMatrix[i][numVars] = 0;
+    }
+}
+
+//////////////////////
+/// WORK    ////
+/////////////////////
+
 string LinearSystem::GetMatrix() const
 {
     stringstream ss;
@@ -291,10 +305,6 @@ string LinearSystem::GetMatrix() const
     }
     return ss.str() + "\n\n";
 }
-
-//////////////////////
-/// WORK    ////
-/////////////////////
 
 void LinearSystem::SetShowWork(bool show_wrk)
 {
@@ -612,15 +622,6 @@ void LinearSystem::SolveNonWide()
     }
 }
 
-void LinearSystem::ResetConstants()
-{
-    for(int i = 0; i < numEq; i++)
-    {
-        constants[i] = augMatrix[i][numVars];
-        augMatrix[i][numVars] = 0;
-    }
-}
-
 void LinearSystem::Solve()
 {
     if(numEq >= numVars)    // not a wide Matrix
@@ -632,7 +633,7 @@ void LinearSystem::Solve()
     solved = true;
     
     DisplayWork();
-    pLogger->Write(solution_ss.str());
+    Showsolution();
     
     // prepare for solving system again
     equationsSolved = numEq;
@@ -640,7 +641,6 @@ void LinearSystem::Solve()
     workRecord.clear();
     solution_ss.str("");
     solution_ss.clear();
-    
     ResetConstants();
 }
 
